@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto Ciclos - Caça-Palavras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #container {
+            text-align: center;
+        }
+
+        #word-list {
+            margin-bottom: 20px;
+        }
+
+        .word {
+            margin: 0 10px;
+            font-size: 18px;
+        }
+
+        #grid-container {
+            display: inline-block;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #timer {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(15, 30px);
+            gap: 1px;
+            margin-top: 20px;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cell.selected {
+            background-color: #ffeb3b;
+        }
+
+        .cell.found {
+            background-color: green;
+            color: white;
+        }
+
+        #game-over {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #game-over-message {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>Projeto Ciclos</h1>
+        <h2>Conectando e Promovendo Vidas</h2>
+        <div id="word-list"></div>
+        <div id="grid-container">
+            <div id="timer"></div>
+            <button onclick="newGame()">Novo Jogo</button>
+            <div id="grid"></div>
+        </div>
+    </div>
+    <div id="game-over">
+        <div id="game-over-message"></div>
+        <button onclick="newGame()">Novo Jogo</button>
+    </div>
+
+    <script>
+        const words = [
+            'SOLIDARIEDADE', 'TECNOLOGIA', 'INOVAÇÃO', 'ALIMENTO', 'DOAÇÃO',
+            'VOLUNTÁRIO', 'CESTAS', 'BÁSICAS', 'IFES', 'FAPES',
+            'CICLOS', 'RECeBA', 'ESTUDANTES', 'COMUNIDADE', 'PARCEIROS',
+            'INSTITUIÇÕES', 'INCLUSÃO', 'SOCIAL', 'FAMÍLIA', 'GESTÃO',
+            'SISTEMA', 'APOIO', 'DESENVOLVIMENTO', 'NECESSIDADE', 'DIGNIDADE',
+            'CONTROLE', 'SUSTENTABILIDADE', 'ORGANIZAÇÃO', 'GINCANA', 'ENGAJAMENTO',
+            'ARRECADAÇÃO', 'BENEFICIÁRIOS', 'TRANSPARÊNCIA', 'AÇÃO', 'IMPACTO',
+            'SOLIDARIZAR', 'EDUCAÇÃO', 'TRANSFORMAÇÃO', 'COLABORAÇÃO', 'COMPROMISSO',
+            'INTEGRIDADE', 'APOIAR', 'RESPEITO', 'ÉTICA', 'CRESCIMENTO',
+            'EMPATIA', 'IGUALDADE', 'RESPONSABILIDADE', 'INCLUSIVO', 'SOCIEDADE',
+            'DIGITAL', 'RECURSOS', 'HUMANOS', 'VALORES', 'FUTURO',
+            'ACESSO', 'VOLUNTARIADO', 'SUSTENTAR', 'ENGAJAR', 'DISTRIBUIÇÃO',
+            'AUXÍLIO', 'AMPARO', 'INICIATIVA', 'JOVENS', 'EDUCAÇÃO',
+            'CURADORIA', 'MOTIVAÇÃO', 'OPORTUNIDADE', 'APRENDIZADO', 'FUTURO',
+            'COMPARTILHAR', 'AJUDAR', 'DINÂMICA', 'CRIATIVIDADE', 'SOLUÇÃO',
+            'CUIDADO', 'GRATIDÃO', 'DEDICAÇÃO', 'APOIO', 'INCLUSÃO',
+            'MELHORAR', 'QUALIDADE', 'VIDA', 'SEGURANÇA', 'BEM-ESTAR',
+            'INCLUIR', 'SOCIAL', 'COLETIVIDADE', 'CONECTAR', 'RESPONSABILIDADE',
+            'RESULTADO', 'APOIO', 'CONTRIBUIR', 'REINTEGRAR', 'TRANSPARÊNCIA',
+            'MOBILIZAR', 'PRESENTE', 'PROGRESSO', 'COMPARTILHAR', 'MISSÃO'
+        ]; // Exemplo, substitua pela lista de 100 palavras
+        let foundWords = [];
+        let grid = [];
+        let selectedCells = [];
+        let timer;
+        let timeLeft = 180; // Tempo ajustado para 3 minutos
+
+        function initGame() {
+            createGrid();
+            createWordList();
+            startTimer();
+        }
+
+        function createGrid() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            grid = [];
+
+            for (let i = 0; i < 15; i++) {
+                grid[i] = [];
+                for (let j = 0; j < 15; j++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('mousedown', startSelection);
+                    cell.addEventListener('mouseover', continueSelection);
+                    cell.addEventListener('mouseup', endSelection);
+                    gridElement.appendChild(cell);
+                    grid[i][j] = cell;
+                }
+            }
+
+            // Colocar palavras na grade
+            const selectedWords = getRandomWords(5);
+            selectedWords.forEach(word => placeWord(word));
+
+            // Preencher células vazias com letras aleatórias
+            for (let i = 0; i < 15; i++) {
+                for (let j = 0; j < 15; j++) {
+                    if (!grid[i][j].textContent) {
+                        grid[i][j].textContent = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                    }
+                }
+            }
+        }
+
+        function placeWord(word) {
+            const directions = [
+                [0, 1],  // direita
+                [0, -1], // esquerda
+                [1, 0],  // para baixo
+                [-1, 0]  // para cima
+            ];
+
+            let placed = false;
+            while (!placed) {
+                const direction = directions[Math.floor(Math.random() * directions.length)];
+                const row = Math.floor(Math.random() * 15);
+                const col = Math.floor(Math.random() * 15);
+
+                if (canPlaceWord(word, row, col, direction)) {
+                    for (let i = 0; i < word.length; i++) {
+                        const newRow = row + i * direction[0];
+                        const newCol = col + i * direction[1];
+                        grid[newRow][newCol].textContent = word[i];
+                    }
+                    placed = true;
+                }
+            }
+        }
+
+        function canPlaceWord(word, row, col, direction) {
+            for (let i = 0; i < word.length; i++) {
+                const newRow = row + i * direction[0];
+                const newCol = col + i * direction[1];
+
+                if (newRow < 0 || newRow >= 15 || newCol < 0 || newCol >= 15 ||
+                    (grid[newRow][newCol].textContent && grid[newRow][newCol].textContent !== word[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function createWordList() {
+            const wordList = document.getElementById('word-list');
+            wordList.innerHTML = '';
+            words.forEach(word => {
+                const wordElement = document.createElement('span');
+                wordElement.textContent = word;
+                wordElement.classList.add('word');
+                wordList.appendChild(wordElement);
+            });
+        }
+
+        function startTimer() {
+            const timerElement = document.getElementById('timer');
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = `Tempo: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    endGame('Tempo esgotado!');
+                }
+            }, 1000);
+        }
+
+        function endGame(message) {
+            clearInterval(timer);
+            document.getElementById('game-over').style.display = 'flex';
+            document.getElementById('game-over-message').textContent = message;
+        }
+
+        function markWordAsFound(word) {
+            const wordElement = Array.from(document.querySelectorAll('.word'))
+                .find(el => el.textContent === word);
+
+            if (wordElement && !foundWords.includes(word)) {
+                wordElement.style.color = 'green';
+                foundWords.push(word);
+                if (foundWords.length === words.length) {
+                    endGame('Parabéns! Você encontrou todas as palavras!');
+                }
+            }
+        }
+
+        function startSelection(e) {
+            selectedCells = [e.target];
+            e.target.classList.add('selected');
+        }
+
+        function continueSelection(e) {
+            if (e.buttons === 1 && !selectedCells.includes(e.target)) {
+                selectedCells.push(e.target);
+                e.target.classList.add('selected');
+            }
+        }
+
+        function endSelection() {
+            const word = selectedCells.map(cell => cell.textContent).join('');
+            if (words.includes(word) || words.includes(word.split('').reverse().join(''))) {
+                selectedCells.forEach(cell => cell.classList.add('found'));
+                markWordAsFound(word);
+            }
+            selectedCells.forEach(cell => cell.classList.remove('selected'));
+            selectedCells = [];
+        }
+
+        function getRandomWords(num) {
+            const shuffled = words.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, num);
+        }
+
+        function newGame() {
+            document.getElementById('game-over').style.display = 'none';
+            timeLeft = 180; // Reiniciar o tempo para 3 minutos
+            foundWords = [];
+            initGame();
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+
+</html>
