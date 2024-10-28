@@ -117,7 +117,7 @@
     </div>
 
     <script>
-        const words = [
+        const wds = [
             'SOLIDARIEDADE', 'TECNOLOGIA', 'INOVAÇÃO', 'ALIMENTO', 'DOAÇÃO',
             'VOLUNTÁRIO', 'CESTAS', 'BÁSICAS', 'IFES', 'FAPES',
             'CICLOS', 'RECeBA', 'ESTUDANTES', 'COMUNIDADE', 'PARCEIROS',
@@ -139,11 +139,33 @@
             'RESULTADO', 'APOIO', 'CONTRIBUIR', 'REINTEGRAR', 'TRANSPARÊNCIA',
             'MOBILIZAR', 'PRESENTE', 'PROGRESSO', 'COMPARTILHAR', 'MISSÃO'
         ]; // Exemplo, substitua pela lista de 100 palavras
+		
+		function selecionarElementosAleatorios(array, quantidade = 5) {
+			if (quantidade > array.length) {
+				throw new Error("O array de entrada não possui elementos suficientes.");
+			}
+
+			const elementosAleatorios = [];
+			const indicesUsados = new Set();
+
+			while (elementosAleatorios.length < quantidade) {
+				const indiceAleatorio = Math.floor(Math.random() * array.length);
+
+				if (!indicesUsados.has(indiceAleatorio)) {
+					elementosAleatorios.push(array[indiceAleatorio]);
+					indicesUsados.add(indiceAleatorio);
+				}
+			}
+			
+			return elementosAleatorios;
+		}
+		
+		const words = selecionarElementosAleatorios(wds);
         let foundWords = [];
         let grid = [];
         let selectedCells = [];
         let timer;
-        let timeLeft = 180; // Tempo ajustado para 3 minutos
+        let timeLeft = 120; // Tempo ajustado para 3 minutos
 
         function initGame() {
             createGrid();
@@ -294,7 +316,7 @@
 
         function newGame() {
             document.getElementById('game-over').style.display = 'none';
-            timeLeft = 180; // Reiniciar o tempo para 3 minutos
+            timeLeft = 120; // Reiniciar o tempo para 3 minutos
             foundWords = [];
             initGame();
         }
